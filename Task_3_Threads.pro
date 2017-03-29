@@ -9,11 +9,9 @@ INCLUDEPATH += "D:\boost_1_63_0"
 LIBS += "-LD:\boost_1_63_0\stage\lib"
 
 SOURCES += main.cpp \
-    parser.cpp \
     scaner.cpp
 
 HEADERS += \
-    parser.h \
     file.h \
     scaner.h \
     mutexFileQueue.h
