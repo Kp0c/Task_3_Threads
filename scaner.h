@@ -14,7 +14,7 @@ public:
 	Scaner(MutexFileQueue* container) : m_container(container) { }
 
 	//Scan folder at path and all subfolders for .c, .cpp, .h and .hpp files
-	void Scan(std::string path, std::function<void()> callback)
+	void Scan(std::string path, std::function<void(File)> callback)
 	{
 		boost::filesystem::directory_iterator end_iter;
 		std::queue<boost::filesystem::directory_iterator> foldersToScan;
@@ -43,7 +43,8 @@ public:
 						if (extension == ".cpp" || extension == ".c" ||
 							extension == ".hpp" || extension == ".h")
 						{
-							m_container->add(File(dir_itr->path().string()));
+							//m_container->add(File(dir_itr->path().string()));
+							callback(File(dir_itr->path().string()));
 						}
 					}
 				}
@@ -54,11 +55,9 @@ public:
 			}
 
 		}
-
-		callback();
 	}
 
 private:
 	MutexFileQueue* m_container;
-	std::function<void()> callback;
+	std::function<void(File)> callback;
 };

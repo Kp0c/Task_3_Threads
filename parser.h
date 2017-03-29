@@ -6,12 +6,11 @@
 class Parser
 {
 public:
-	Parser(MutexQueue<File>* files, int threads_count = 5);
+	Parser(/*MutexQueue<File>* files, int threads_count = 5*/);
 
-	void Start();
-	void Stop();
+	void Parse(std::string path);
 private:
-	int m_threads_count;
-	MutexQueue<File>* m_files;
-	std::thread threads[];
+	//int m_threads_count;
+	//MutexQueue<File>* m_files;
+	//std::thread threads[];
 };
