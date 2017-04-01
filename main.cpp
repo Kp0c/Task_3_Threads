@@ -62,9 +62,7 @@ void callback(File file)
 
 int main()
 {
-	myQueue = new MutexFileQueue();
-	Scaner scaner(myQueue);
-	scaner.Scan(PATH, callback);
+	Scaner::Scan(PATH, /*TODO: add regex */, callback);
 
 	return 0;
 }
