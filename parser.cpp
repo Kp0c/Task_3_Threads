@@ -2,40 +2,41 @@
 
 namespace parser {
 
-void Parser::Parse(std::string path)
+Statistic Parser::Parse(std::string path)
 {
 	std::ifstream file;
-	file.open(path, ios::in);
-	Statistic stat;
+	file.open(path, std::ios::in);
+	Statistic stat {0,0,0,0};
 
 	if (file.is_open())
 	{
-		std::string text (std::istreambuf_iterator<char>(file),
-						  std::istreambuf_iterator<char>());
+		std::string text;
 
-		stat.blank_lines = std::regex_search(text, blank_line_regex);
-		/*std::string line;
-		while ( getline (file,line) )
-		{
-			if(line == "")
+		text.assign(std::istreambuf_iterator<char>(file),
+					std::istreambuf_iterator<char>());
+
+		stat.line_count = std::count(text.begin(),text.end(),'\n');
+
+		auto begin = std::sregex_iterator(text.begin(), text.end(), blank_line_regex);
+		auto end = std::sregex_iterator();
+
+		stat.blank_lines = std::distance(begin, end);
+
+		begin = std::sregex_iterator(text.begin(),text.end(), comment_line_regex);
+
+		stat.comment_lines = 0;
+		for(auto i = begin; i != end; ++i)
 			{
-				stat.blank_lines++;
+				std::smatch match = *i;
+				std::string str = match.str();
+				stat.comment_lines += std::count(str.begin(), str.end(), '\n') + 1;
 			}
-			else
-			{
-				line = line.substr(line.find_first_not_of('\t'));
-				std::string comment_line = line.substr(line.find_first_not_of(' '));
-				//comment_line = comment_line.substr(comment_line.find_first_not_of('\t'),2);
-				if(line.substr(0,2) == "//")
-				{
-					stat.comment_lines++;
-				}
-				else
-					stat.code_lines++;
-			}
-		}*/
+
+		stat.code_lines = stat.line_count - (stat.blank_lines + stat.comment_lines);
 		file.close();
 	}
+
+	return stat;
 }
 
 }
