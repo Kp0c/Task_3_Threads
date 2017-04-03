@@ -26,13 +26,79 @@ Statistic Parser::Parse(std::string path)
 
 		stat.comment_lines = 0;
 		for(auto i = begin; i != end; ++i)
-			{
-				std::smatch match = *i;
-				std::string str = match.str();
-				stat.comment_lines += std::count(str.begin(), str.end(), '\n') + 1;
-			}
+		{
+			std::smatch match = *i;
+			std::string str = match.str();
+			stat.comment_lines += std::count(str.begin(), str.end(), '\n') + 1;
+		}
 
 		stat.code_lines = stat.line_count - (stat.blank_lines + stat.comment_lines);
+		file.close();
+	}
+
+	return stat;
+}
+
+Statistic Parser::Parse2(std::string path)
+{
+	std::ifstream file;
+	file.open(path, std::ios::in);
+	Statistic stat {0,0,0,0};
+
+	if (file.is_open())
+	{
+		bool in_multiline = false;
+		std::string line;
+		std::string lineSub;
+		while ( getline (file,line) )
+		{
+			line.erase(std::remove_if(line.begin(), line.end(), [] (char c) {
+				return c == ' ' || c == '\t';
+			}));
+
+			if(line == "")
+			{
+				stat.blank_lines++;
+			}
+			else if(in_multiline)
+			{
+				stat.comment_lines++;
+				if(line.find("*/") != std::string::npos)
+				{
+					if(line.substr(0,2) == "*/")
+					{
+						stat.blank_lines++;
+						stat.comment_lines--;
+					}
+
+					if(line.find("/*") == std::string::npos)
+					{
+						in_multiline = false;
+					}
+				}
+			}
+			else
+			{
+				lineSub = line.substr(0,2);
+				if(lineSub == "//")
+				{
+					stat.comment_lines++;
+				}
+				else if (lineSub == "/*")
+				{
+					stat.comment_lines++;
+					in_multiline = true;
+				}
+				else
+				{
+					stat.code_lines++;
+					if(line.find("/*") != std::string::npos)
+						in_multiline = true;
+				}
+			}
+		}
+
+		stat.line_count = stat.code_lines + stat.comment_lines + stat.blank_lines;
 		file.close();
 	}
 

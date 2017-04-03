@@ -12,4 +12,5 @@ SOURCES += main.cpp \
     parser.cpp
 
 HEADERS += parser.h \
-    scaner.h
+    scaner.h \
+    stringMutexQueue.h

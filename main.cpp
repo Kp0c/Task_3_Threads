@@ -1,68 +1,92 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <queue>
 #include <thread>
+#include <atomic>
+#include <chrono>
 
-#include "file.h"
-#include "mutexFileQueue.h"
 #include "scaner.h"
+#include "parser.h"
+#include "stringMutexQueue.h"
 
-using namespace std;
+static const std::string PATH = R"(D:\boost_1_63_0\boost)";
 
-static const std::string PATH = R"(D:\boost_1_63_0\boost\accumulators\framework)";
+std::atomic<int> proceced_files;
+std::atomic<int> total_lines;
+std::atomic<int> blank_lines;
+std::atomic<int> comment_lines;
+std::atomic<int> code_lines;
 
-MutexFileQueue* myQueue;
+bool is_done = false;
+StringMutexQueue queue;
 
-void ParseFile(std::string path)
+void ParseThread()
 {
-	std::ifstream file;
-	file.open(path, ios::in);
-	int blank_lines = 0;
-	int comment_lines = 0;
-	int code_lines = 0;
+	parser::Parser parser;
+	parser::Statistic stat;
+	std::string parse_path;
 
-	if (file.is_open())
+	while(!is_done || !queue.isEmpty())
 	{
-		std::string line;
-		while ( getline (file,line) )
+		if(!queue.isEmpty())
 		{
-			if(line == "")
-			{
-				blank_lines++;
-			}
-			else
-			{
-				line = line.substr(line.find_first_not_of('\t'));
-				std::string comment_line = line.substr(line.find_first_not_of(' '));
-				//comment_line = comment_line.substr(comment_line.find_first_not_of('\t'),2);
-				if(line.substr(0,2) == "//")
-				{
-					comment_lines++;
-				}
-				else
-					code_lines++;
-			}
-		}
-		file.close();
-	}
+			parse_path = queue.pop();
+			stat = parser.Parse2(parse_path);
 
-	std::cout << "File: " << path << std::endl;
-	std::cout << "Blank lines: " << blank_lines << std::endl;
-	std::cout << "Comment lines: " << comment_lines << std::endl;
-	std::cout << "Code lines: " << code_lines << std::endl;
+			std::cout << "parsing " << parse_path << std::endl;
+
+			total_lines += stat.line_count;
+			blank_lines += stat.blank_lines;
+			comment_lines += stat.comment_lines;
+			code_lines += stat.code_lines;
+			proceced_files += 1;
+		}
+	}
 }
 
-void callback(File file)
+void callback(std::string path)
 {
-	thread new_thread(ParseFile, file.path);
-	new_thread.join();
-	//parser->Parse(file.path);
+	queue.add(path);
+	std::cout << "found new file" << std::endl;
 }
 
 int main()
 {
-	Scaner::Scan(PATH, /*TODO: add regex */, callback);
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+
+	scaner::Scaner scnr;
+
+	int hardware_concurrency = std::thread::hardware_concurrency() + 1;
+	std::thread* threads = new std::thread[hardware_concurrency];
+
+	for(int i = 0; i < hardware_concurrency; i++)
+	{
+		threads[i] = std::thread(ParseThread);
+	}
+
+	scnr.Scan(PATH, std::regex(R"(^.*[.](c|cpp|h|hpp)$)"), callback, [] { is_done = true; });
+
+	ParseThread();
+
+	for(int i = 0; i < hardware_concurrency; i++)
+	{
+		threads[i].join();
+	}
+
+	end = std::chrono::system_clock::now();
+
+	std::cout << "Blank: " << blank_lines << std::endl;
+	std::cout << "Comment: " << comment_lines << std::endl;
+	std::cout << "Code: " << code_lines << std::endl;
+	std::cout << "Total: " << total_lines << std::endl;
+	std::cout << "Files: " << proceced_files << std::endl;
+
+	std::chrono::duration<double> elapsed_seconds = end-start;
+
+	std::cout << "elapsed time: " << elapsed_seconds.count() << "s" << std::endl;
+
+	delete[] threads;
 
 	return 0;
 }

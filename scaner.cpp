@@ -4,7 +4,8 @@ using namespace boost::filesystem;
 
 namespace scaner {
 
-void Scaner::Scan(const std::string& path, std::regex extension_pattern, std::function<void(std::string)> callback)
+void Scaner::Scan(const std::string& path, std::regex extension_pattern, std::function<void(std::string)> callback,
+				  std::function<void()> done_callback)
 {
 	recursive_directory_iterator end_iter;
 
@@ -21,6 +22,8 @@ void Scaner::Scan(const std::string& path, std::regex extension_pattern, std::fu
 			}
 		}
 	}
+
+	done_callback();
 }
 
 }
