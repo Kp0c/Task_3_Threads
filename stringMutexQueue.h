@@ -30,10 +30,12 @@ public:
 
 	bool isEmpty() const
 	{
+		std::lock_guard<std::mutex> lk(m_mutex);
+
 		return m_queue.empty();
 	}
 
 private:
 	std::queue<std::string> m_queue;
-	std::mutex m_mutex;
+	mutable std::mutex m_mutex;
 };
