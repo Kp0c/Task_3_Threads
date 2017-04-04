@@ -7,9 +7,12 @@ CONFIG -= qt
 #INCLUDEPATH += "D:\boost_1_63_0"
 #LIBS += "-LD:\boost_1_63_0\stage\lib"
 
+INCLUDEPATH += "$$(Boost_DIR)"
+LIBS += "-L$$(Boost_DIR)\stage\lib"
+
 #filesystem
-INCLUDEPATH += "$$PWD\boost"
-LIBS += "-L$$PWD\3rd_party\libs\boost"
+#INCLUDEPATH += "$$PWD\boost"
+#LIBS += "-L$$PWD\3rd_party\libs\boost"
 
 SOURCES += main.cpp \
     scaner.cpp \
