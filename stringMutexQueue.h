@@ -9,26 +9,24 @@ public:
 
 	void add(std::string element)
 	{
-		m_mutex.lock();
+		std::lock_guard<std::mutex> lk(m_mutex);
 		m_queue.push(element);
-		m_mutex.unlock();
 	}
 
 	std::string pop()
 	{
-		m_mutex.lock();
+		std::lock_guard<std::mutex> lk(m_mutex);
 		std::string temp = m_queue.front();
 		m_queue.pop();
-		m_mutex.unlock();
 
 		return temp;
 	}
 
-	bool isEmpty(){
+	bool isEmpty() const{
 		return m_queue.empty();
 	}
 
 private:
 	std::queue<std::string> m_queue;
-	std::mutex m_mutex;
+	mutable std::mutex m_mutex;
 };

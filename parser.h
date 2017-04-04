@@ -2,25 +2,26 @@
 #include <string>
 #include <regex>
 #include <fstream>
+#include <atomic>
 
 namespace parser {
 
 struct Statistic
 {
-	int blank_lines;
-	int comment_lines;
-	int code_lines;
-	int line_count;
+	std::atomic<int> blank_lines;
+	std::atomic<int> comment_lines;
+	std::atomic<int> code_lines;
+	std::atomic<int> line_count;
+	std::atomic<int> processed_files;
 };
 
 class Parser
 {
 public:
-	Statistic Parse(std::string path);
-	Statistic Parse2(std::string path);
+	static void Parse(std::string path, Statistic* stat);
 private:
-	std::regex blank_line_regex = R"(^(?:[\t ]*(?:\r?\n|\r))+)";
-	std::regex comment_line_regex = R"(^[\t ]*[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]|^[\t ]*([/][/]).*)";
+	//static const std::regex blank_line_regex = R"(^\s*$)";
+	//static const std::regex comment_line_regex = R"(\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+)";
 };
 
 }

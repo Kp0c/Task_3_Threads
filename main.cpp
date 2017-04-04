@@ -4,89 +4,103 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <sstream>
 
 #include "scaner.h"
 #include "parser.h"
 #include "stringMutexQueue.h"
 
-static const std::string PATH = R"(D:\boost_1_63_0\boost)";
-
-std::atomic<int> proceced_files;
-std::atomic<int> total_lines;
-std::atomic<int> blank_lines;
-std::atomic<int> comment_lines;
-std::atomic<int> code_lines;
-
-bool is_done = false;
-StringMutexQueue queue;
-
-void ParseThread()
+void ParseThread(parser::Statistic* stat, StringMutexQueue* queue, const bool* is_done_searching)
 {
-	parser::Parser parser;
-	parser::Statistic stat;
 	std::string parse_path;
 
-	while(!is_done || !queue.isEmpty())
+	while(!*is_done_searching || !queue->isEmpty())
 	{
-		if(!queue.isEmpty())
+		if(!queue->isEmpty())
 		{
-			parse_path = queue.pop();
-			stat = parser.Parse2(parse_path);
-
-			std::cout << "parsing " << parse_path << std::endl;
-
-			total_lines += stat.line_count;
-			blank_lines += stat.blank_lines;
-			comment_lines += stat.comment_lines;
-			code_lines += stat.code_lines;
-			proceced_files += 1;
+			parse_path = queue->pop();
+			parser::Parser::Parse(parse_path, stat);
 		}
 	}
 }
 
-void callback(std::string path)
+std::stringstream FormOutput(parser::Statistic* stat, double time)
 {
-	queue.add(path);
-	std::cout << "found new file" << std::endl;
+	std::stringstream stream;
+
+	stream << "Blank: " << stat->blank_lines << std::endl;
+	stream << "Comment: " << stat->comment_lines << std::endl;
+	stream << "Code: " << stat->code_lines << std::endl;
+	stream << "Total: " << stat->line_count << std::endl;
+	stream << "Files: " << stat->processed_files << std::endl;
+	stream << "elapsed time: " << time << "s" << std::endl;
+
+	return stream;
 }
 
-int main()
+void PrintConsole(const std::stringstream* string)
 {
-	std::chrono::time_point<std::chrono::system_clock> start, end;
-	start = std::chrono::system_clock::now();
+	std::cout << string->str();
+}
 
-	scaner::Scaner scnr;
+void PrintFile(const std::stringstream* string, std::string path)
+{
+	std::ofstream file;
+	file.open(path);
+	file << string->str();
+	file.close();
+}
 
-	int hardware_concurrency = std::thread::hardware_concurrency() + 1;
-	std::thread* threads = new std::thread[hardware_concurrency];
-
-	for(int i = 0; i < hardware_concurrency; i++)
+int main(int argc, const char* argv[])
+{
+	if(argc != 2)
 	{
-		threads[i] = std::thread(ParseThread);
+		std::cout << "Wrong argument" << std::endl;
+		return -1;
 	}
 
-	scnr.Scan(PATH, std::regex(R"(^.*[.](c|cpp|h|hpp)$)"), callback, [] { is_done = true; });
+	//note the time
+	auto start = std::chrono::system_clock::now();
 
-	ParseThread();
+	//take hardware core count for parallel parsing.
+	int hardware_concurrency = std::thread::hardware_concurrency();
+	std::thread* threads = new std::thread[hardware_concurrency];
 
+	//initializating
+	parser::Statistic* stat = new parser::Statistic {0, 0, 0, 0, 0};
+	StringMutexQueue* queue = new StringMutexQueue();
+	bool is_done_searching = false;
+
+	//start threads for parse
+	for(int i = 0; i < hardware_concurrency; i++)
+	{
+		threads[i] = std::thread(ParseThread, stat, queue, &is_done_searching);
+	}
+
+	//start thread for scan
+	scaner::Scaner::Scan(argv[1], std::regex(R"(^.*[.](c|cpp|h|hpp)$)"),
+						[&queue] (std::string path) { queue->add(path); },
+						[&is_done_searching] { is_done_searching = true; });
+
+	//after scan help parse by main thread
+	ParseThread(stat, queue, &is_done_searching);
+
+	//wait untill each thread end parsing
 	for(int i = 0; i < hardware_concurrency; i++)
 	{
 		threads[i].join();
 	}
 
-	end = std::chrono::system_clock::now();
+	delete[] threads;
 
-	std::cout << "Blank: " << blank_lines << std::endl;
-	std::cout << "Comment: " << comment_lines << std::endl;
-	std::cout << "Code: " << code_lines << std::endl;
-	std::cout << "Total: " << total_lines << std::endl;
-	std::cout << "Files: " << proceced_files << std::endl;
-
+	//note the time
+	auto end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end-start;
 
-	std::cout << "elapsed time: " << elapsed_seconds.count() << "s" << std::endl;
-
-	delete[] threads;
+	//print statistic
+	std::stringstream stream(FormOutput(stat, elapsed_seconds.count()));
+	PrintConsole(&stream);
+	PrintFile(&stream, "test.txt");
 
 	return 0;
 }
