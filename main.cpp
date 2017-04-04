@@ -14,9 +14,9 @@ void ParseThread(parser::Statistic* stat, StringMutexQueue* queue, const bool* i
 {
 	std::string parse_path;
 
-	while(!*is_done_searching || !queue->isEmpty())
+	while(!*is_done_searching || !queue->IsEmpty())
 	{
-		parse_path = queue->pop();
+		parse_path = queue->Pop();
 		if(!parse_path.empty())
 		{
 			parser::Parser::Parse(parse_path, stat);
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
 	//start thread for scan
 	scaner::Scaner::Scan(argv[1], std::regex(R"(^.*[.](c|cpp|h|hpp)$)"),
-			[&queue] (std::string path) { queue->add(path); },
+			[&queue] (std::string path) { queue->Add(path); },
 			[&is_done_searching] { is_done_searching = true; });
 
 	//after scan help parse by main thread

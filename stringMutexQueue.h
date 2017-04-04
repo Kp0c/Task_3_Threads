@@ -7,14 +7,14 @@ class StringMutexQueue
 public:
 	StringMutexQueue() = default;
 
-	void add(std::string element)
+	void Add(std::string element)
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
 
 		m_queue.push(element);
 	}
 
-	std::string pop()
+	std::string Pop()
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
 
@@ -28,7 +28,7 @@ public:
 		return temp;
 	}
 
-	bool isEmpty() const
+	bool IsEmpty() const
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
 
