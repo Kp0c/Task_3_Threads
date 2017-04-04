@@ -3,6 +3,7 @@
 #include <regex>
 #include <fstream>
 #include <atomic>
+#include <memory>
 
 namespace parser
 {
@@ -19,7 +20,7 @@ struct Statistic
 class Parser
 {
 public:
-	static void Parse(std::string path, Statistic* stat);
+	static void Parse(std::string path, std::shared_ptr<Statistic> stat);
 };
 
 }

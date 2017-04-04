@@ -18,7 +18,7 @@ public:
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
 
-		std::string temp("");
+		std::string temp;
 		if(!m_queue.empty())
 		{
 			temp = m_queue.front();

@@ -3,7 +3,7 @@
 namespace parser
 {
 
-void Parser::Parse(std::string path, Statistic* stat)
+void Parser::Parse(std::string path, std::shared_ptr<Statistic> stat)
 {
 	std::ifstream file;
 	file.open(path, std::ios::in);
@@ -17,18 +17,18 @@ void Parser::Parse(std::string path, Statistic* stat)
 	{
 		stat->processed_files++;
 
-		bool is_in_multiline = false;
-		std::string line;
-		std::string first_two_symbols;
-
 		int code_lines = 0;
 		int comment_lines = 0;
 		int blank_lines = 0;
-		while (getline (file,line))
+
+		bool is_in_multiline = false;
+		std::string line;
+		while (getline(file,line))
 		{
-			line.erase(std::remove_if(line.begin(), line.end(), [] (char c)
+			std::locale locale;
+			line.erase(std::remove_if(line.begin(), line.end(), [&locale] (char c)
 			{
-				return c == ' ' || c == '\t';
+				return std::isspace(c, locale);
 			}));
 
 			if(line.empty())
@@ -55,7 +55,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 			}
 			else
 			{
-				first_two_symbols = line.substr(0,2);
+				std::string first_two_symbols = line.substr(0,2);
 				if(first_two_symbols == "//")
 				{
 					comment_lines++;
