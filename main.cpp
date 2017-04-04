@@ -68,14 +68,14 @@ int main(int argc, char* argv[])
 	std::thread* threads = new std::thread[hardware_concurrency];
 
 	//initializating
-	parser::Statistic* stat = new parser::Statistic {0, 0, 0, 0, 0};
-	StringMutexQueue* queue = new StringMutexQueue();
+	std::shared_ptr<parser::Statistic> stat(new parser::Statistic {0, 0, 0, 0, 0});
+	std::shared_ptr<StringMutexQueue> queue(new StringMutexQueue());
 	bool is_done_searching = false;
 
 	//start threads for parse
 	for(int i = 0; i < hardware_concurrency; i++)
 	{
-		threads[i] = std::thread(ParseThread, stat, queue, &is_done_searching);
+		threads[i] = std::thread(ParseThread, stat.get(), queue.get(), &is_done_searching);
 	}
 
 	//start thread for scan
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 			[&is_done_searching] { is_done_searching = true; });
 
 	//after scan help parse by main thread
-	ParseThread(stat, queue, &is_done_searching);
+	ParseThread(stat.get(), queue.get(), &is_done_searching);
 
 	//wait untill each thread end parsing
 	for(int i = 0; i < hardware_concurrency; i++)
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 	std::chrono::duration<double> elapsed_seconds = end-start;
 
 	//print statistic
-	std::stringstream stream(FormOutput(stat, elapsed_seconds.count()));
+	std::stringstream stream(FormOutput(stat.get(), elapsed_seconds.count()));
 	PrintConsole(&stream);
 	PrintFile(&stream, "test.txt");
 
