@@ -1,75 +1,45 @@
 #include "parser.h"
 
-namespace parser {
-
-Statistic* Parser::ParseRegex(std::string path)
+namespace parser
 {
-	std::ifstream file;
-	file.open(path, std::ios::in);
-	Statistic* stat  = new Statistic {0, 0, 0, 0, 0};
-
-	if (file.is_open())
-	{
-		std::string text;
-
-		text.assign(std::istreambuf_iterator<char>(file),
-					std::istreambuf_iterator<char>());
-
-		stat->line_count = std::count(text.begin(),text.end(),'\n');
-
-		auto begin = std::sregex_iterator(text.begin(), text.end(), blank_line_regex);
-		auto end = std::sregex_iterator();
-
-		stat->blank_lines = std::distance(begin, end);
-
-		begin = std::sregex_iterator(text.begin(),text.end(), comment_line_regex);
-
-		stat->comment_lines = 0;
-		for(auto i = begin; i != end; ++i)
-		{
-			std::smatch match = *i;
-			std::string str = match.str();
-			stat->comment_lines += std::count(str.begin(), str.end(), '\n') + 1;
-		}
-
-		stat->code_lines = stat->line_count - (stat->blank_lines + stat->comment_lines);
-		file.close();
-	}
-
-	return stat;
-}
 
 void Parser::Parse(std::string path, Statistic* stat)
 {
 	std::ifstream file;
 	file.open(path, std::ios::in);
 
+	if(stat == nullptr)
+	{
+		throw std::invalid_argument("stat cannot be null");
+	}
+
 	if (file.is_open())
 	{
 		stat->processed_files++;
 
-		bool in_multiline = false;
+		bool is_in_multiline = false;
 		std::string line;
-		std::string lineSub;
+		std::string first_two_symbols;
 
 		int code_lines = 0;
 		int comment_lines = 0;
 		int blank_lines = 0;
-		while ( getline (file,line) )
+		while (getline (file,line))
 		{
 			line.erase(std::remove_if(line.begin(), line.end(), [] (char c) {
 				return c == ' ' || c == '\t';
 			}));
 
-			if(line == "")
+			if(line.empty())
 			{
 				blank_lines++;
 			}
-			else if(in_multiline)
+			else if(is_in_multiline)
 			{
 				comment_lines++;
 				if(line.find("*/") != std::string::npos)
 				{
+					//duct tape for "*/" situations (it's blank line)
 					if(line.substr(0,2) == "*/")
 					{
 						blank_lines++;
@@ -78,27 +48,30 @@ void Parser::Parse(std::string path, Statistic* stat)
 
 					if(line.find("/*") == std::string::npos)
 					{
-						in_multiline = false;
+						is_in_multiline = false;
 					}
 				}
 			}
 			else
 			{
-				lineSub = line.substr(0,2);
-				if(lineSub == "//")
+				first_two_symbols = line.substr(0,2);
+				if(first_two_symbols == "//")
 				{
 					comment_lines++;
 				}
-				else if (lineSub == "/*")
+				else if (first_two_symbols == "/*")
 				{
 					comment_lines++;
-					in_multiline = true;
+					is_in_multiline = true;
 				}
 				else
 				{
 					code_lines++;
+					//duct tape for "<code>/*" situations (it's code line) ¯\_(ツ)_/¯
 					if(line.find("/*") != std::string::npos)
-						in_multiline = true;
+					{
+						is_in_multiline = true;
+					}
 				}
 			}
 		}
@@ -109,6 +82,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 		stat->blank_lines += blank_lines;
 		stat->line_count += code_lines + comment_lines + blank_lines;
 
+		//close file
 		file.close();
 	}
 }

@@ -16,15 +16,13 @@ void ParseThread(parser::Statistic* stat, StringMutexQueue* queue, const bool* i
 
 	while(!*is_done_searching || !queue->isEmpty())
 	{
-		if(!queue->isEmpty())
-		{
-			parse_path = queue->pop();
+		parse_path = queue->pop();
+		if(!parse_path.empty())
 			parser::Parser::Parse(parse_path, stat);
-		}
 	}
 }
 
-std::stringstream FormOutput(parser::Statistic* stat, double time)
+std::stringstream FormOutput(const parser::Statistic* stat, double time)
 {
 	std::stringstream stream;
 
@@ -33,7 +31,7 @@ std::stringstream FormOutput(parser::Statistic* stat, double time)
 	stream << "Code: " << stat->code_lines << std::endl;
 	stream << "Total: " << stat->line_count << std::endl;
 	stream << "Files: " << stat->processed_files << std::endl;
-	stream << "elapsed time: " << time << "s" << std::endl;
+	stream << "Elapsed time: " << time << "s" << std::endl;
 
 	return stream;
 }
@@ -46,12 +44,15 @@ void PrintConsole(const std::stringstream* string)
 void PrintFile(const std::stringstream* string, std::string path)
 {
 	std::ofstream file;
-	file.open(path);
-	file << string->str();
-	file.close();
+	file.open(path, std::ios::out);
+	if (file.is_open())
+	{
+		file << string->str();
+		file.close();
+	}
 }
 
-int main(int argc, const char* argv[])
+int main(int argc, char* argv[])
 {
 	if(argc != 2)
 	{
@@ -79,8 +80,8 @@ int main(int argc, const char* argv[])
 
 	//start thread for scan
 	scaner::Scaner::Scan(argv[1], std::regex(R"(^.*[.](c|cpp|h|hpp)$)"),
-						[&queue] (std::string path) { queue->add(path); },
-						[&is_done_searching] { is_done_searching = true; });
+			[&queue] (std::string path) { queue->add(path); },
+			[&is_done_searching] { is_done_searching = true; });
 
 	//after scan help parse by main thread
 	ParseThread(stat, queue, &is_done_searching);

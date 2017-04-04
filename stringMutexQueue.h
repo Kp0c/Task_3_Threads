@@ -10,14 +10,20 @@ public:
 	void add(std::string element)
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
+
 		m_queue.push(element);
 	}
 
 	std::string pop()
 	{
 		std::lock_guard<std::mutex> lk(m_mutex);
-		std::string temp = m_queue.front();
-		m_queue.pop();
+
+		std::string temp("");
+		if(!m_queue.empty())
+		{
+			temp = m_queue.front();
+			m_queue.pop();
+		}
 
 		return temp;
 	}
@@ -28,5 +34,5 @@ public:
 
 private:
 	std::queue<std::string> m_queue;
-	mutable std::mutex m_mutex;
+	std::mutex m_mutex;
 };
