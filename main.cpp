@@ -18,7 +18,9 @@ void ParseThread(parser::Statistic* stat, StringMutexQueue* queue, const bool* i
 	{
 		parse_path = queue->pop();
 		if(!parse_path.empty())
+		{
 			parser::Parser::Parse(parse_path, stat);
+		}
 	}
 }
 
@@ -45,7 +47,7 @@ void PrintFile(const std::stringstream* string, std::string path)
 {
 	std::ofstream file;
 	file.open(path, std::ios::out);
-	if (file.is_open())
+	if(file.is_open())
 	{
 		file << string->str();
 		file.close();

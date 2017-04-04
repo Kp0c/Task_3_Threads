@@ -13,7 +13,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 		throw std::invalid_argument("stat cannot be null");
 	}
 
-	if (file.is_open())
+	if(file.is_open())
 	{
 		stat->processed_files++;
 
@@ -26,7 +26,8 @@ void Parser::Parse(std::string path, Statistic* stat)
 		int blank_lines = 0;
 		while (getline (file,line))
 		{
-			line.erase(std::remove_if(line.begin(), line.end(), [] (char c) {
+			line.erase(std::remove_if(line.begin(), line.end(), [] (char c)
+			{
 				return c == ' ' || c == '\t';
 			}));
 
@@ -39,7 +40,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 				comment_lines++;
 				if(line.find("*/") != std::string::npos)
 				{
-					//duct tape for "*/" situations (it's blank line)
+					//duct tape for "*/" situations (it's a blank line)
 					if(line.substr(0,2) == "*/")
 					{
 						blank_lines++;
@@ -59,7 +60,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 				{
 					comment_lines++;
 				}
-				else if (first_two_symbols == "/*")
+				else if(first_two_symbols == "/*")
 				{
 					comment_lines++;
 					is_in_multiline = true;
@@ -67,7 +68,7 @@ void Parser::Parse(std::string path, Statistic* stat)
 				else
 				{
 					code_lines++;
-					//duct tape for "<code>/*" situations (it's code line) ¯\_(ツ)_/¯
+					//duct tape for "<code>/*" situations (it's a code line) ¯\_(ツ)_/¯
 					if(line.find("/*") != std::string::npos)
 					{
 						is_in_multiline = true;

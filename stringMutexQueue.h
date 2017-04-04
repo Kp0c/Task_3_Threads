@@ -28,7 +28,8 @@ public:
 		return temp;
 	}
 
-	bool isEmpty() const{
+	bool isEmpty() const
+	{
 		return m_queue.empty();
 	}
 
