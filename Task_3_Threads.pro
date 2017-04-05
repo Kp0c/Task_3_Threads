@@ -9,8 +9,10 @@ LIBS += "-L$$(Boost_DIR)\stage\lib"
 
 SOURCES += main.cpp \
     scaner.cpp \
-    parser.cpp
+    parser.cpp \
+    projectAnalyzer.cpp
 
 HEADERS += parser.h \
     scaner.h \
     stringMutexQueue.h \
+    projectAnalyzer.h

@@ -10,7 +10,7 @@ void Parser::Parse(std::string path, std::shared_ptr<Statistic> stat)
 
 	if(stat == nullptr)
 	{
-		throw std::invalid_argument("stat cannot be null");
+		throw std::invalid_argument("Stat cannot be null");
 	}
 
 	if(file.is_open())
