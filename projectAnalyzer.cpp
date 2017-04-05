@@ -10,7 +10,7 @@ std::shared_ptr<std::stringstream> ProjectAnalyzer::Analyze(std::string path)
 
 	//take hardware core count for parallel parsing.
 	unsigned hardware_concurrency = std::thread::hardware_concurrency();
-	std::thread* threads = new std::thread[hardware_concurrency];
+	std::unique_ptr<std::thread[]> threads(new std::thread[hardware_concurrency]);
 
 	//initializating
 	auto stat = std::make_shared<parser::Statistic>();
@@ -36,8 +36,6 @@ std::shared_ptr<std::stringstream> ProjectAnalyzer::Analyze(std::string path)
 	{
 		threads[i].join();
 	}
-
-	delete[] threads;
 
 	//note the time
 	auto end = std::chrono::system_clock::now();
