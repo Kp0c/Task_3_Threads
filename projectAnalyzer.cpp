@@ -9,16 +9,16 @@ std::shared_ptr<std::stringstream> ProjectAnalyzer::Analyze(std::string path)
 	auto start = std::chrono::system_clock::now();
 
 	//take hardware core count for parallel parsing.
-	int hardware_concurrency = std::thread::hardware_concurrency();
+	unsigned hardware_concurrency = std::thread::hardware_concurrency();
 	std::thread* threads = new std::thread[hardware_concurrency];
 
 	//initializating
-	std::shared_ptr<parser::Statistic> stat(new parser::Statistic {0, 0, 0, 0, 0});
-	std::shared_ptr<StringMutexQueue> queue(new StringMutexQueue());
-	std::shared_ptr<bool> is_done_searching(new bool {false});
+	auto stat = std::make_shared<parser::Statistic>();
+	auto queue = std::make_shared<StringMutexQueue>();
+	auto is_done_searching = std::make_shared<bool>(false);
 
 	//start threads for parse
-	for(int i = 0; i < hardware_concurrency; i++)
+	for(unsigned i = 0; i < hardware_concurrency; i++)
 	{
 		threads[i] = std::thread(ProjectAnalyzer::ParseThread, stat, queue, is_done_searching);
 	}
@@ -26,13 +26,13 @@ std::shared_ptr<std::stringstream> ProjectAnalyzer::Analyze(std::string path)
 	//start thread for scan
 	scaner::Scaner::Scan(path, std::regex(R"(^.*[.](c|cpp|h|hpp)$)"),
 			[&queue] (std::string path) { queue->Add(path); },
-			[is_done_searching] { *is_done_searching = true; });
+			[&is_done_searching] { *is_done_searching = true; });
 
 	//after scan help parse by main thread
 	ProjectAnalyzer::ParseThread(stat, queue, is_done_searching);
 
 	//wait untill each thread end parsing
-	for(int i = 0; i < hardware_concurrency; i++)
+	for(unsigned i = 0; i < hardware_concurrency; i++)
 	{
 		threads[i].join();
 	}
