@@ -2,40 +2,39 @@
 #include <queue>
 #include <mutex>
 
+namespace ProjectParser
+{
+
 class StringMutexQueue
 {
 public:
-	StringMutexQueue() = default;
-
 	void Add(std::string element)
 	{
-		std::lock_guard<std::mutex> lk(m_mutex);
-
-		m_queue.push(element);
+		std::lock_guard<std::mutex> lock(mutex_);
+		queue_.push(element);
 	}
 
 	std::string Pop()
 	{
-		std::lock_guard<std::mutex> lk(m_mutex);
-
+		std::lock_guard<std::mutex> lock(mutex_);
 		std::string temp;
-		if(!m_queue.empty())
+		if (!queue_.empty())
 		{
-			temp = m_queue.front();
-			m_queue.pop();
+			temp = queue_.front();
+			queue_.pop();
 		}
-
 		return temp;
 	}
 
 	bool IsEmpty() const
 	{
-		std::lock_guard<std::mutex> lk(m_mutex);
-
-		return m_queue.empty();
+		std::lock_guard<std::mutex> lock(mutex_);
+		return queue_.empty();
 	}
 
 private:
-	std::queue<std::string> m_queue;
-	mutable std::mutex m_mutex;
+	std::queue<std::string> queue_;
+	mutable std::mutex mutex_;
 };
+
+} // namespace ProjectParser

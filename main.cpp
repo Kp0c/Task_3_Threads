@@ -1,35 +1,35 @@
+#include "projectAnalyzer.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
 
-#include "projectAnalyzer.h"
-
-void PrintConsole(std::shared_ptr<const std::stringstream> string)
+void PrintConsole(const std::string& text)
 {
-	std::cout << string->str();
+	std::cout << text;
 }
 
-void PrintFile(std::shared_ptr<const std::stringstream> string, std::string path)
+void PrintFile(const std::string& text, const std::string& path)
 {
 	std::ofstream file;
 	file.open(path, std::ios::out);
-	if(file.is_open())
+	if (file.is_open())
 	{
-		file << string->str();
+		file << text;
 		file.close();
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2)
+	if (argc != 2)
 	{
 		std::cout << "Wrong argument" << std::endl;
 		return -1;
 	}
 
-	std::shared_ptr<std::stringstream> stream = project_analyzer::ProjectAnalyzer::Analyze(argv[1]);
+	std::string stream(ProjectParser::ProjectAnalyzer::Analyze(argv[1]).str());
 
 	//print statistic
 	PrintConsole(stream);
