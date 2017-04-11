@@ -12,11 +12,11 @@ namespace ProjectParser
 
 struct Statistic
 {
-	std::atomic<int> blank_lines;
-	std::atomic<int> comment_lines;
-	std::atomic<int> code_lines;
-	std::atomic<int> line_count;
-	std::atomic<int> processed_files;
+	std::atomic<unsigned> blank_lines;
+	std::atomic<unsigned> comment_lines;
+	std::atomic<unsigned> code_lines;
+	std::atomic<unsigned> line_count;
+	std::atomic<unsigned> processed_files;
 
 	Statistic()
 	{

@@ -11,9 +11,9 @@ void Parser::Parse(const std::string& path, Statistic& stat)
 	{
 		stat.processed_files++;
 
-		int code_lines = 0;
-		int comment_lines = 0;
-		int blank_lines = 0;
+		unsigned code_lines = 0;
+		unsigned comment_lines = 0;
+		unsigned blank_lines = 0;
 
 		bool is_in_multiline = false;
 		std::string line;
